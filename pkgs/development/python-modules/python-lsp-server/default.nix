@@ -4,6 +4,7 @@
 , buildPythonPackage
 , docstring-to-markdown
 , fetchFromGitHub
+, fetchpatch
 , flake8
 , flaky
 , jedi
@@ -28,12 +29,13 @@
 , ujson
 , websockets
 , whatthepatch
+, wheel
 , yapf
 }:
 
 buildPythonPackage rec {
   pname = "python-lsp-server";
-  version = "1.7.2";
+  version = "1.7.4";
   format = "pyproject";
 
   disabled = pythonOlder "3.7";
@@ -42,16 +44,25 @@ buildPythonPackage rec {
     owner = "python-lsp";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-jsWk2HDDRjOAPGX1K9NqhWkA5xD2fM830z7g7Kee0yQ=";
+    hash = "sha256-plciPUROFileVULGBZpwUTkW2NZVHy4Nuf4+fSjd8nM=";
   };
 
-  SETUPTOOLS_SCM_PRETEND_VERSION = version;
+  patches = [
+    # https://github.com/python-lsp/python-lsp-server/pull/416
+    (fetchpatch {
+      name = "bump-jedi-upper-pin-to-0.20.patch";
+      url = "https://github.com/python-lsp/python-lsp-server/commit/f33a93afc8c3a0f16751f9e1f6601a37967fd7df.patch";
+      hash = "sha256-lBpzXxjlQp2ig0z2DRJw+jQZ5eRLIOJYjGrzfgvknDA=";
+    })
+  ];
 
   postPatch = ''
     substituteInPlace pyproject.toml \
       --replace "--cov-report html --cov-report term --junitxml=pytest.xml" "" \
       --replace "--cov pylsp --cov test" ""
   '';
+
+  env.SETUPTOOLS_SCM_PRETEND_VERSION = version;
 
   pythonRelaxDeps = [
     "autopep8"
@@ -65,6 +76,7 @@ buildPythonPackage rec {
   nativeBuildInputs = [
     pythonRelaxDepsHook
     setuptools-scm
+    wheel
   ];
 
   propagatedBuildInputs = [

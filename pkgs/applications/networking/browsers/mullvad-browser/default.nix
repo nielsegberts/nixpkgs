@@ -78,12 +78,15 @@ let
       ++ lib.optionals mediaSupport [ ffmpeg ]
   );
 
-  version = "12.0.6";
+  version = "12.5.3";
 
   sources = {
     x86_64-linux = fetchurl {
-      url = "https://cdn.mullvad.net/browser/${version}/mullvad-browser-linux64-${version}_ALL.tar.xz";
-      hash = "sha256-XE6HFU38FhnikxGHRHxIGS3Z3Y2JNWH0yq2NejqbROI=";
+      urls = [
+        "https://cdn.mullvad.net/browser/${version}/mullvad-browser-linux64-${version}_ALL.tar.xz"
+        "https://github.com/mullvad/mullvad-browser/releases/download/${version}/mullvad-browser-linux64-${version}_ALL.tar.xz"
+      ];
+      hash = "sha256-vnxpmZSqPe7wE4USDbYGm+5k9J/nuUk2uJx4CmwFPvw=";
     };
   };
 
@@ -233,7 +236,7 @@ stdenv.mkDerivation rec {
     description = "Privacy-focused browser made in a collaboration between The Tor Project and Mullvad";
     homepage = "https://mullvad.net/en/browser";
     platforms = attrNames sources;
-    maintainers = with maintainers; [ felschr ];
+    maintainers = with maintainers; [ felschr panicgh ];
     # MPL2.0+, GPL+, &c.  While it's not entirely clear whether
     # the compound is "libre" in a strict sense (some components place certain
     # restrictions on redistribution), it's free enough for our purposes.

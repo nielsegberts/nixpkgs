@@ -3,6 +3,7 @@
 , fetchPypi
 , pythonOlder
 , cmake
+, ninja
 , numpy
 , pybind11
 , scikit-build-core
@@ -11,18 +12,19 @@
 
 buildPythonPackage rec {
   pname = "awkward-cpp";
-  version = "15";
+  version = "22";
   format = "pyproject";
 
-  disabled = pythonOlder "3.7";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "f6c825db2db981f852903d9574a07015c5d53ef8e4630772f18c7f167045aa0d";
+    hash = "sha256-IWeWNvshz+NxX4ijIyaleRmThNstpKYplcMQUC1/6F8=";
   };
 
   nativeBuildInputs = [
     cmake
+    ninja
     pybind11
     scikit-build-core
   ] ++ scikit-build-core.optional-dependencies.pyproject;

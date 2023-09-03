@@ -47,7 +47,7 @@
 # Hardening
 , graphene-hardened-malloc
 # Whether to use graphene-hardened-malloc
-, useHardenedMalloc ? true
+, useHardenedMalloc ? null
 
 # Whether to disable multiprocess support
 , disableContentSandbox ? false
@@ -56,7 +56,10 @@
 , extraPrefs ? ""
 }:
 
-let
+lib.warnIf (useHardenedMalloc != null)
+  "tor-browser-bundle-bin: useHardenedMalloc is deprecated and enabling it can cause issues"
+
+(let
   libPath = lib.makeLibraryPath libPkgs;
 
   libPkgs = [
@@ -89,7 +92,7 @@ let
   fteLibPath = lib.makeLibraryPath [ stdenv.cc.cc gmp ];
 
   # Upstream source
-  version = "12.0.6";
+  version = "12.5.3";
 
   lang = "ALL";
 
@@ -101,7 +104,7 @@ let
         "https://tor.eff.org/dist/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
         "https://tor.calyxinstitute.org/dist/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
       ];
-      hash = "sha256-MLy/T8A+udasITWYSzaqXSFhA3PJsG7DnKJG0b9UYvA=";
+      hash = "sha256-QF71UXZXwLjr1XugKeFWZH9RXb4xeKWZScds+xtNekI=";
     };
 
     i686-linux = fetchurl {
@@ -111,7 +114,7 @@ let
         "https://tor.eff.org/dist/torbrowser/${version}/tor-browser-linux32-${version}_${lang}.tar.xz"
         "https://tor.calyxinstitute.org/dist/torbrowser/${version}/tor-browser-linux32-${version}_${lang}.tar.xz"
       ];
-      hash = "sha256-njJB5k7rQxRyL7foU8fLCQxy43dJvV26oKvQ+fw6U0o=";
+      hash = "sha256-xaLTYo8aJO0DzFQLSUHF12vKOEMO6hbVXQdL3PHLb8s=";
     };
   };
 
@@ -248,7 +251,7 @@ stdenv.mkDerivation rec {
 
     # Hard-code path to TBB fonts; see also FONTCONFIG_FILE in
     # the wrapper below.
-    FONTCONFIG_FILE=$TBB_IN_STORE/TorBrowser/Data/fontconfig/fonts.conf
+    FONTCONFIG_FILE=$TBB_IN_STORE/fontconfig/fonts.conf
     sed -i "$FONTCONFIG_FILE" \
         -e "s,<dir>fonts</dir>,<dir>$TBB_IN_STORE/fonts</dir>,"
 
@@ -268,7 +271,7 @@ stdenv.mkDerivation rec {
     GeoIPv6File $TBB_IN_STORE/TorBrowser/Data/Tor/geoip6
     EOF
 
-    WRAPPER_LD_PRELOAD=${lib.optionalString useHardenedMalloc
+    WRAPPER_LD_PRELOAD=${lib.optionalString (useHardenedMalloc == true)
       "${graphene-hardened-malloc}/lib/libhardened_malloc.so"}
 
     WRAPPER_XDG_DATA_DIRS=${lib.concatMapStringsSep ":" (x: "${x}/share") [
@@ -469,7 +472,7 @@ stdenv.mkDerivation rec {
     homepage = "https://www.torproject.org/";
     changelog = "https://gitweb.torproject.org/builders/tor-browser-build.git/plain/projects/tor-browser/Bundle-Data/Docs/ChangeLog.txt?h=maint-${version}";
     platforms = attrNames sources;
-    maintainers = with maintainers; [ offline matejc thoughtpolice joachifm hax404 KarlJoad ];
+    maintainers = with maintainers; [ felschr panicgh joachifm hax404 ];
     mainProgram = "tor-browser";
     # MPL2.0+, GPL+, &c.  While it's not entirely clear whether
     # the compound is "libre" in a strict sense (some components place certain
@@ -477,4 +480,4 @@ stdenv.mkDerivation rec {
     license = licenses.free;
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
   };
-}
+})

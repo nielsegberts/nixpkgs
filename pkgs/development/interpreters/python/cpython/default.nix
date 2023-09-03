@@ -109,7 +109,7 @@ let
     pythonOnBuildForHost = override pkgsBuildHost.${pythonAttr};
     pythonOnBuildForTarget = override pkgsBuildTarget.${pythonAttr};
     pythonOnHostForHost = override pkgsHostHost.${pythonAttr};
-    pythonOnTargetForTarget = if lib.hasAttr pythonAttr pkgsTargetTarget then (override pkgsTargetTarget.${pythonAttr}) else {};
+    pythonOnTargetForTarget = lib.optionalAttrs (lib.hasAttr pythonAttr pkgsTargetTarget) (override pkgsTargetTarget.${pythonAttr});
   };
 
   version = with sourceVersion; "${major}.${minor}.${patch}${suffix}";
@@ -184,6 +184,8 @@ let
         if parsed.cpu.significantByte.name == "littleEndian" then "arm" else "armeb"
       else if isx86_32 then "i386"
       else parsed.cpu.name;
+    # Python doesn't distinguish musl and glibc and always prefixes with "gnu"
+    gnuAbiName = replaceStrings [ "musl" ] [ "gnu" ] parsed.abi.name;
     pythonAbiName =
       # python's build doesn't support every gnu<extension>, and doesn't
       # differentiate between musl and glibc, so we list those supported in
@@ -191,7 +193,7 @@ let
       # https://github.com/python/cpython/blob/e488e300f5c01289c10906c2e53a8e43d6de32d8/configure.ac#L724
       # Note: this is an approximation, as it doesn't take into account the CPU
       # family, or the nixpkgs abi naming conventions.
-      if elem parsed.abi.name [
+      if elem gnuAbiName [
         "gnux32"
         "gnueabihf"
         "gnueabi"
@@ -199,7 +201,7 @@ let
         "gnuabi64"
         "gnuspe"
       ]
-      then parsed.abi.name
+      then gnuAbiName
       else "gnu";
     multiarch =
       if isDarwin then "darwin"
@@ -377,6 +379,9 @@ in with passthru; stdenv.mkDerivation {
   '' + optionalString stdenv.isDarwin ''
     # Override the auto-detection in setup.py, which assumes a universal build
     export PYTHON_DECIMAL_WITH_MACHINE=${if stdenv.isAarch64 then "uint128" else "x64"}
+  '' + optionalString (stdenv.isDarwin && x11Support && pythonAtLeast "3.11") ''
+    export TCLTK_LIBS="-L${tcl}/lib -L${tk}/lib -l${tcl.libPrefix} -l${tk.libPrefix}"
+    export TCLTK_CFLAGS="-I${tcl}/include -I${tk}/include"
   '' + optionalString (isPy3k && pythonOlder "3.7") ''
     # Determinism: The interpreter is patched to write null timestamps when compiling Python files
     #   so Python doesn't try to update the bytecode when seeing frozen timestamps in Nix's store.
@@ -436,6 +441,7 @@ in with passthru; stdenv.mkDerivation {
     ln -s "$out/bin/python3" "$out/bin/python"
     ln -s "$out/bin/python3-config" "$out/bin/python-config"
     ln -s "$out/lib/pkgconfig/python3.pc" "$out/lib/pkgconfig/python.pc"
+    ln -sL "$out/share/man/man1/python3.1.gz" "$out/share/man/man1/python.1.gz"
 
     # Get rid of retained dependencies on -dev packages, and remove
     # some $TMPDIR references to improve binary reproducibility.
@@ -569,5 +575,6 @@ in with passthru; stdenv.mkDerivation {
     license = licenses.psfl;
     platforms = platforms.linux ++ platforms.darwin;
     maintainers = with maintainers; [ fridh ];
+    mainProgram = executable;
   };
 }

@@ -6,17 +6,17 @@
 
 buildGoModule rec {
   pname = "kubescape";
-  version = "2.3.5";
+  version = "2.9.0";
 
   src = fetchFromGitHub {
     owner = "kubescape";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-jCtEy2W3srfu65HABTgzAhFKlECtpDtR8mary5r/jW4=";
+    hash = "sha256-rZlM+SerEE2RNxnituPK5JB7Al0/KtFyGHg3UeCfDNk=";
     fetchSubmodules = true;
   };
 
-  vendorHash = "sha256-mcaA0PLQFoL/Vc+Te2rtzyJHueJpYfn1VjPF9qxi4NI=";
+  vendorHash = "sha256-gRLCkjW8yY5FT2J7tNZQwEbhrdUMrj4Xwybe/coX0UY=";
 
   nativeBuildInputs = [
     installShellFiles
@@ -25,7 +25,7 @@ buildGoModule rec {
   ldflags = [
     "-s"
     "-w"
-    "-X github.com/kubescape/kubescape/v2/core/cautils.BuildNumber=v${version}"
+    "-X=github.com/kubescape/kubescape/v2/core/cautils.BuildNumber=v${version}"
   ];
 
   subPackages = [ "." ];
@@ -42,6 +42,7 @@ buildGoModule rec {
     # remove tests that use networking
     rm core/pkg/resourcehandler/urlloader_test.go
     rm core/pkg/opaprocessor/*_test.go
+    rm core/cautils/getter/downloadreleasedpolicy_test.go
 
     # remove tests that use networking
     substituteInPlace core/pkg/resourcehandler/repositoryscanner_test.go \

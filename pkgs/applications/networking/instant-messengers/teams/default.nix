@@ -14,7 +14,7 @@
 , gawk
 , xdg-utils
 , systemd
-, nodePackages
+, asar
 , xar
 , cpio
 , makeWrapper
@@ -39,6 +39,7 @@ let
     license = licenses.unfree;
     maintainers = with maintainers; [ liff tricktron ];
     platforms = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    mainProgram = "teams";
   };
 
   linux = stdenv.mkDerivation rec {
@@ -54,7 +55,7 @@ let
       hash = hashes.linux;
     };
 
-    nativeBuildInputs = [ dpkg autoPatchelfHook wrapGAppsHook nodePackages.asar ];
+    nativeBuildInputs = [ dpkg autoPatchelfHook wrapGAppsHook asar ];
 
     unpackCmd = "dpkg -x $curSrc .";
 
@@ -101,6 +102,10 @@ let
 
       mv share/teams $out/opt/
       mv share $out/share
+
+      mkdir -p $out/share/icons/hicolor/512x512/apps
+      mv $out/share/pixmaps/teams.png $out/share/icons/hicolor/512x512/apps
+      rmdir $out/share/pixmaps
 
       substituteInPlace $out/share/applications/teams.desktop \
         --replace /usr/bin/ ""

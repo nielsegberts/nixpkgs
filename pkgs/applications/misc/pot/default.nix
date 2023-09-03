@@ -23,16 +23,16 @@
 
 stdenv.mkDerivation rec {
   pname = "pot";
-  version = "0.5.0";
+  version = "1.10.0";
 
   src = fetchFromGitHub {
     owner = "pot-app";
     repo = "pot-desktop";
     rev = version;
-    hash = "sha256-sAAdw7gYUQTHZYmxSAk2LByR+iMT836sQolk2NOgWD0=";
+    hash = "sha256-v5yx8pE8+m+5CDy7X3CwitYhFQMX8Ynt8Y2k1lEZKpg=";
   };
 
-  sourceRoot = "source/src-tauri";
+  sourceRoot = "${src.name}/src-tauri";
 
   postPatch = ''
     substituteInPlace $cargoDepsCopy/libappindicator-sys-*/src/lib.rs \
@@ -70,15 +70,17 @@ stdenv.mkDerivation rec {
 
     dontFixup = true;
     outputHashMode = "recursive";
-    outputHash = "sha256-lqGskG1MWbZKEmqJf4b9dGltmFHw/qOo/Sh7JIFS4IQ=";
+    outputHash = "sha256-HJdVAjvHmhvztJMR9rVniWl12sGQYTyZojEYaoKnn5M=";
   };
 
   cargoDeps = rustPlatform.importCargoLock {
     lockFile = ./Cargo.lock;
     outputHashes = {
-      "tauri-plugin-single-instance-0.0.0" = "sha256-M6uGcf4UWAU+494wAK/r2ta1c3IZ07iaURLwJJR9F3U=";
-      "tauri-plugin-autostart-0.0.0" = "sha256-M6uGcf4UWAU+494wAK/r2ta1c3IZ07iaURLwJJR9F3U=";
+      "tauri-plugin-single-instance-0.0.0" = "sha256-Wb08d5Cpi8YhtngbnQ3ziy+zAwg5ZY+2xKejgE2oCNE=";
+      "tauri-plugin-autostart-0.0.0" = "sha256-Wb08d5Cpi8YhtngbnQ3ziy+zAwg5ZY+2xKejgE2oCNE=";
       "enigo-0.1.2" = "sha256-99VJ0WYD8jV6CYUZ1bpYJBwIE2iwOZ9SjOvyA2On12Q=";
+      "selection-0.1.0" = "sha256-V4vixiyKqhpZeTXiFw0HKz5xr0zHd4DkC/hovJ8Y2a8=";
+      "screenshots-0.6.0" = "sha256-NHs7gqplg/eSUWYojayxeJtX7T4f8mt+akahi9LeukU=";
     };
   };
 
@@ -103,12 +105,12 @@ stdenv.mkDerivation rec {
 
   ESBUILD_BINARY_PATH = "${lib.getExe (esbuild.override {
     buildGoModule = args: buildGoModule (args // rec {
-      version = "0.17.15";
+      version = "0.17.19";
       src = fetchFromGitHub {
         owner = "evanw";
         repo = "esbuild";
         rev = "v${version}";
-        hash = "sha256-AzkjVw3o+yP/l6jiMmgzaymb0el2/OcAl8WQYbuMprw=";
+        hash = "sha256-PLC7OJLSOiDq4OjvrdfCawZPfbfuZix4Waopzrj8qsU=";
       };
       vendorHash = "sha256-+BfxCyg0KkDQpHt/wycy/8CTG6YBA/VJvJFhhzUnSiQ=";
     });

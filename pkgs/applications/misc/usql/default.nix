@@ -10,28 +10,29 @@
 
 buildGoModule rec {
   pname = "usql";
-  version = "0.14.7";
+  version = "0.15.0";
 
   src = fetchFromGitHub {
     owner = "xo";
     repo = "usql";
     rev = "v${version}";
-    hash = "sha256-iR+gRWSSxAudDewGBVlEQunFfodYFAuShVq2Z1rZ2k4=";
+    hash = "sha256-YjRbrhJSbX1OLEc7A72ubg1KtzJSWY0KphD4d8dAKQ8=";
   };
 
   buildInputs = [ unixODBC icu ];
 
-  vendorHash = "sha256-teVsEVCaSn0/t79LIig3gTw5J8j2YTRx7CoWVDGwQNI=";
+  vendorHash = "sha256-OZ/eui+LR+Gn1nmu9wryGmz3jiUMuDScmTZ5G8UKWP8=";
   proxyVendor = true;
 
-  # Exclude broken impala & hive driver
+  # Exclude broken genji, hive & impala drivers (bad group)
   # These drivers break too often and are not used.
   #
   # See https://github.com/xo/usql/pull/347
   #
   excludedPackages = [
-    "impala"
+    "genji"
     "hive"
+    "impala"
   ];
 
   # These tags and flags are copied from build-release.sh

@@ -311,6 +311,17 @@ let
         '';
       };
 
+      expires = mkOption {
+        type = types.nullOr (types.strMatching "[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}");
+        default = null;
+        description = lib.mdDoc ''
+          Set the date on which the user's account will no longer be
+          accessible. The date is expressed in the format YYYY-MM-DD, or null
+          to disable the expiry.
+          A user whose account is locked must contact the system
+          administrator before being able to use the system again.
+        '';
+      };
     };
 
     config = mkMerge
@@ -438,7 +449,7 @@ let
           name uid group description home homeMode createHome isSystemUser
           password passwordFile hashedPassword
           autoSubUidGidRange subUidRanges subGidRanges
-          initialPassword initialHashedPassword;
+          initialPassword initialHashedPassword expires;
         shell = utils.toShellPath u.shell;
       }) cfg.users;
     groups = attrValues cfg.groups;
@@ -539,14 +550,12 @@ in {
 
     # systemd initrd
     boot.initrd.systemd.users = mkOption {
-      visible = false;
       description = ''
         Users to include in initrd.
       '';
       default = {};
       type = types.attrsOf (types.submodule ({ name, ... }: {
         options.uid = mkOption {
-          visible = false;
           type = types.int;
           description = ''
             ID of the user in initrd.
@@ -555,7 +564,6 @@ in {
           default = cfg.users.${name}.uid;
         };
         options.group = mkOption {
-          visible = false;
           type = types.singleLineStr;
           description = ''
             Group the user belongs to in initrd.
@@ -567,14 +575,12 @@ in {
     };
 
     boot.initrd.systemd.groups = mkOption {
-      visible = false;
       description = ''
         Groups to include in initrd.
       '';
       default = {};
       type = types.attrsOf (types.submodule ({ name, ... }: {
         options.gid = mkOption {
-          visible = false;
           type = types.int;
           description = ''
             ID of the group in initrd.
@@ -652,7 +658,7 @@ in {
       deps = [ "users" ];
       text = ''
         users=()
-        while IFS=: read -r user hash tail; do
+        while IFS=: read -r user hash _; do
           if [[ "$hash" = "$"* && ! "$hash" =~ ^\''$${cryptSchemeIdPatternGroup}\$ ]]; then
             users+=("$user")
           fi

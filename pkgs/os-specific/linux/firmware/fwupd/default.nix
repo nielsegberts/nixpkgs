@@ -58,6 +58,7 @@
 
 let
   python = python3.withPackages (p: with p; [
+    jinja2
     pygobject3
     setuptools
   ]);
@@ -122,7 +123,7 @@ let
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "fwupd";
-  version = "1.8.15";
+  version = "1.9.4";
 
   # libfwupd goes to lib
   # daemon, plug-ins and libfwupdplugin go to out
@@ -133,7 +134,7 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "fwupd";
     repo = "fwupd";
     rev = finalAttrs.version;
-    hash = "sha256-M7uCT8xJ6ym0X6iAgT3rM2ki0T6QgLJWlFU39aC64o4=";
+    hash = "sha256-xjN6nHqg7sQzgojClySQEjLQBdI5291TxPhgLjKzKvk=";
   };
 
   patches = [
@@ -211,9 +212,6 @@ stdenv.mkDerivation (finalAttrs: {
     "-Dplugin_dummy=true"
     # We are building the official releases.
     "-Dsupported_build=enabled"
-    # Would dlopen libsoup to preserve compatibility with clients linking against older fwupd.
-    # https://github.com/fwupd/fwupd/commit/173d389fa59d8db152a5b9da7cc1171586639c97
-    "-Dsoup_session_compat=false"
     "-Dudevdir=lib/udev"
     "-Dsystemd_root_prefix=${placeholder "out"}"
     "-Dinstalled_test_prefix=${placeholder "installedTests"}"
@@ -261,6 +259,7 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     patchShebangs \
       contrib/generate-version-script.py \
+      contrib/generate-man.py \
       po/test-deps
 
     substituteInPlace data/installed-tests/fwupdmgr-p2p.sh \
@@ -337,12 +336,11 @@ stdenv.mkDerivation (finalAttrs: {
   passthru = {
     filesInstalledToEtc = [
       "fwupd/bios-settings.d/README.md"
-      "fwupd/daemon.conf"
+      "fwupd/fwupd.conf"
       "fwupd/remotes.d/lvfs-testing.conf"
       "fwupd/remotes.d/lvfs.conf"
       "fwupd/remotes.d/vendor.conf"
       "fwupd/remotes.d/vendor-directory.conf"
-      "fwupd/uefi_capsule.conf"
       "pki/fwupd/GPG-KEY-Linux-Foundation-Firmware"
       "pki/fwupd/GPG-KEY-Linux-Vendor-Firmware-Service"
       "pki/fwupd/LVFS-CA.pem"
@@ -352,12 +350,6 @@ stdenv.mkDerivation (finalAttrs: {
       "grub.d/35_fwupd"
     ] ++ lib.optionals haveDell [
       "fwupd/remotes.d/dell-esrt.conf"
-    ] ++ lib.optionals haveRedfish [
-      "fwupd/redfish.conf"
-    ] ++ lib.optionals haveMSR [
-      "fwupd/msr.conf"
-    ] ++ lib.optionals isx86 [
-      "fwupd/thunderbolt.conf"
     ];
 
     # DisabledPlugins key in fwupd/daemon.conf
@@ -392,7 +384,7 @@ stdenv.mkDerivation (finalAttrs: {
           assert len(passthru_etc - package_etc) == 0, f'fwupd package lists the following paths in passthru.filesInstalledToEtc that are not contained in /etc: {passthru_etc - package_etc}'
 
           config = configparser.RawConfigParser()
-          config.read('${finalAttrs.finalPackage}/etc/fwupd/daemon.conf')
+          config.read('${finalAttrs.finalPackage}/etc/fwupd/fwupd.conf')
           package_disabled_plugins = config.get('fwupd', 'DisabledPlugins').rstrip(';').split(';')
           passthru_disabled_plugins = ${listToPy finalAttrs.passthru.defaultDisabledPlugins}
           assert package_disabled_plugins == passthru_disabled_plugins, f'Default disabled plug-ins in the package {package_disabled_plugins} do not match those listed in passthru.defaultDisabledPlugins {passthru_disabled_plugins}'
@@ -404,7 +396,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = with lib; {
     homepage = "https://fwupd.org/";
-    maintainers = with maintainers; [ ];
+    maintainers = with maintainers; [ rvdp ];
     license = licenses.lgpl21Plus;
     platforms = platforms.linux;
   };
